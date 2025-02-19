@@ -1,42 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>腔内电图</title>
-    <style>
-      body {
-        user-select: none;
-      }
-      canvas {
-        border: 1px solid #000;
-        display: block;
-        margin: 20px auto;
-        cursor: crosshair;
-      }
-      #info {
-        margin-top: 20px;
-        font-family: Arial, sans-serif;
-        text-align: center;
-        white-space: break-spaces;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="select-box">
-      <label for="selectBox">选择通道</label>
-      <select id="selectBox" placeholder="请选择通道数">
-        <option value="5" selected>5</option>
-        <option value="10">10</option>
-      </select>
-    </div>
-    <canvas id="iegmCanvas" width="1000" height="600"></canvas>
-    <div id="info">
-      <div>点击canvas增加竖线竖线并查看数据。</div>
-      <div>长按和拖拽一个频道的高度以调整频道间距。</div>
-    </div>
-    </div>
 
-    <script src="./index.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>腔内电图</title>
+  <style>
+    body {
+      user-select: none;
+    }
+
+    canvas {
+      border: 1px solid #000;
+      display: block;
+      margin: 20px auto;
+      cursor: crosshair;
+    }
+
+    #info,
+    #click-info {
+      margin-top: 20px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      white-space: break-spaces;
+    }
+
+    #popup {
+      position: absolute;
+      background: white;
+      border: 1px solid #000;
+      padding: 15px;
+      display: none;
+      font-family: Arial, sans-serif;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+      white-space: break-spaces;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      cursor: pointer;
+      background-color: #eee;
+      width: 14px;
+      height: 14px;
+      text-align: center;
+      line-height: 12px;
+      font-size: 12px;
+      color: #000;
+    }
+
+    .close-btn:hover {
+      color: #fff;
+      background-color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="select-box">
+    <label for="selectBox">选择通道</label>
+    <select id="selectBox" placeholder="请选择通道数">
+      <option value="5" selected>5</option>
+      <option value="10">10</option>
+    </select>
+  </div>
+  <canvas id="iegmCanvas" width="1000" height="600"></canvas>
+  <div id="popup"></div>
+  <div id="info">
+    <div>点击canvas增加竖线竖线并查看数据。</div>
+    <div>长按和拖拽一个频道的高度以调整频道间距。</div>
+  </div>
+  <div id="click-info"></div>
+
+  <script src="./index.js"></script>
+</body>
+
 </html>

@@ -2,7 +2,9 @@ window.onload = () => {
   const canvas = document.getElementById("iegmCanvas");
   const ctx = canvas.getContext("2d");
   const infoDiv = document.getElementById("info");
+  const clickInfoDiv = document.getElementById("click-info");
   const selectBox = document.getElementById("selectBox");
+  const popupBox = document.getElementById("popup");
 
   const speed = 2; // 波形的移动速度
   const padding = 50; // 画布边距
@@ -21,6 +23,8 @@ window.onload = () => {
   let isFirstLine = true; // 标记当前是第一条还是第二条竖线
   let initialMouseY = 0; // 拖拽起始Y坐标
   let initialSpacing = 0; // 拖拽起始间距
+
+  let lastClick = { channel: null, time: null };
   // 生成随机噪声，用于模拟腔内电图的不规则性
   const generateNoise = (scale) => {
     return (Math.random() * 2 - 1) * scale;
@@ -75,12 +79,8 @@ window.onload = () => {
     ctx.stroke();
     ctx.font = "10px Arial";
 
-    // 添加因素名称
-    console.log(iegmNames);
-
     for (let i = 0; i < channelCount; i++) {
       const y = getChannelY(i) + getChannelHeight(i) / 2;
-      console.log(iegmNames[i]);
       ctx.fillText(iegmNames[i], 2, y);
     }
   };
@@ -95,7 +95,7 @@ window.onload = () => {
   };
 
   // 获取通道的高度
-  const getChannelHeight = (index) => {
+  const getChannelHeight = () => {
     return channelSpacing - 20; // 固定高度
   };
 
@@ -105,6 +105,16 @@ window.onload = () => {
     ctx.lineWidth = 2;
 
     for (let i = 0; i < channelCount; i++) {
+      console.log(isDraggingChannel, draggedChannelIndex);
+
+      if (isDraggingChannel && draggedChannelIndex !== -1) { // 正在拖拽时
+        console.log('触发了吗');
+        if (i === draggedChannelIndex) {
+          ctx.strokeStyle = "#f0f000";
+        } else {
+          ctx.strokeStyle = "#00ff00";
+        }
+      }
       ctx.beginPath();
       ctx.moveTo(padding, getChannelY(i) + getChannelHeight(i) / 2); // 从左侧中间开始绘制
 
@@ -134,30 +144,34 @@ window.onload = () => {
     if (verticalLines.length === 2) {
       const x1 = verticalLines[0];
       const x2 = verticalLines[1];
+      const index = iegmNames.findIndex((name) => name === lastClick.channel);
+      const y = getChannelY(index) + getChannelHeight(index) / 2;
+      console.log(x1, x2);
+
       const midX = (x1 + x2) / 2;
 
       // 绘制带箭头的横线
       ctx.strokeStyle = '#0000ff';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x1, padding + channelSpacing / 2);
-      ctx.lineTo(x2, padding + channelSpacing / 2);
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
       ctx.stroke();
 
       // 绘制左箭头
       ctx.beginPath();
-      ctx.moveTo(x1, padding + channelSpacing / 2);
-      ctx.lineTo(x1 + 10, padding + channelSpacing / 2 - 5);
-      ctx.lineTo(x1 + 10, padding + channelSpacing / 2 + 5);
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x1 + 10, y - 5);
+      ctx.lineTo(x1 + 10, y + 5);
       ctx.closePath();
       ctx.fillStyle = '#0000ff';
       ctx.fill();
 
       // 绘制右箭头
       ctx.beginPath();
-      ctx.moveTo(x2, padding + channelSpacing / 2);
-      ctx.lineTo(x2 - 10, padding + channelSpacing / 2 - 5);
-      ctx.lineTo(x2 - 10, padding + channelSpacing / 2 + 5);
+      ctx.moveTo(x2, y);
+      ctx.lineTo(x2 - 10, y - 5);
+      ctx.lineTo(x2 - 10, y + 5);
       ctx.closePath();
       ctx.fillStyle = '#0000ff';
       ctx.fill();
@@ -170,8 +184,8 @@ window.onload = () => {
       const diff = (y2 - y1).toFixed(2);
 
       ctx.fillStyle = '#0000ff';
-      ctx.fillText(`Δ: ${diff}`, midX - 20, padding + channelSpacing / 2 - 10);
-  }
+      ctx.fillText(`Δ: ${diff}`, midX - 20, y - 10);
+    }
   };
 
   // 绘制Canvas内容
@@ -189,13 +203,46 @@ window.onload = () => {
     // 绘制通道波形
     drawChannels();
 
+    // requestAnimationFrame(drawChannels);
+
     // 绘制竖线
     drawVerticalLines();
-    requestAnimationFrame(drawChannels);
   };
 
+
+  // 隐藏弹窗
+  const hidePopup = () => {
+    popup.style.display = 'none';
+  }
+
+  const initCloseButton = () => {
+    const dom = document.createElement('div'); // 添加dom
+    dom.setAttribute('class', 'close-btn');
+    dom.innerText = 'X';
+    dom.addEventListener('click', () => {
+      hidePopup();
+    });
+    return dom;
+  }
+
+  // 显示弹窗
+  const showPopup = (content, x, y) => {
+
+    const closeBtn = initCloseButton();
+
+    console.log(closeBtn);
+
+    popup.innerHTML = content;
+    popup.style.display = 'block';
+    const width = popup.offsetWidth;
+    popup.style.left = `${x + width + 10}px`;
+    popup.style.top = `${y}px`;
+    popup.appendChild(closeBtn);
+  }
+
+
   // 显示竖线上的数据
-  const showData = () => {
+  const showData = (mouseX, mouseY) => {
     if (verticalLines.length === 0) return;
 
     let info = "";
@@ -225,9 +272,58 @@ window.onload = () => {
         info += `${iegmNames[i]}: 平均数 = ${avg}\n`;
       }
     }
+    showPopup(info, mouseX, mouseY);
 
     infoDiv.textContent = info;
   };
+
+  // 获取点击位置对应的通道和时间
+  const getClickInfo = (x, y) => {
+    const channelIndex = Math.floor((y - 20) / channelSpacing);
+    const time = ((x - 50) / (canvas.width - 100)) * totalTime;
+    return { channel: iegmNames[channelIndex], time };
+  }
+
+  const showClickInfos = (x, y) => {
+    const { channel, time } = getClickInfo(x, y);
+    console.log(`点击通道: ${channel}, 时间: ${time}`);
+
+
+
+    if (lastClick.channel === channel) {
+
+      let info = "";
+
+      const minTime = Math.min(lastClick.time, time);
+      const maxTime = Math.max(lastClick.time, time);
+
+      console.log(`时间范围是: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms`);
+
+
+      const channelIndex = iegmNames.indexOf(channel);
+      const channelData = iegmData[channelIndex];
+      console.log(`通道 Index: ${channelIndex}`);
+
+
+      const startIndex = Math.floor(minTime);
+      const endIndex = Math.floor(maxTime);
+      console.log(`通道开始与结束时间取整: ${startIndex} ${endIndex}`);
+
+      const dataSlice = channelData.slice(startIndex, endIndex + 1);
+      const maxValue = Math.max(...dataSlice);
+      const minValue = Math.min(...dataSlice);
+
+      console.log(`通道: ${channel}, 时间范围: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms`);
+      console.log(`最大值: ${maxValue}, 最小值: ${minValue}`);
+
+      info += `当前通道: ${channel}, 时间范围: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms\n`;
+      info += `最大值: ${maxValue}, 最小值: ${minValue}\n`;
+
+      clickInfoDiv.textContent = info;
+    }
+
+    lastClick = { channel, time };
+  }
 
   // 点击事件处理
   canvas.addEventListener("click", (event) => {
@@ -236,9 +332,13 @@ window.onload = () => {
     }
     const rect = canvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left; // 点击的X坐标
+    const mouseY = event.clientY - rect.top;
+
 
     // 检查点击是否在绘图区域内
     if (mouseX < padding || mouseX > canvas.width - padding) return;
+
+    showClickInfos(mouseX, mouseY);
 
     // 添加或替换竖线
     if (isFirstLine) {
@@ -258,7 +358,7 @@ window.onload = () => {
     drawCanvas();
 
     // 显示数据
-    showData();
+    showData(mouseX, mouseY);
   });
 
   // 长按拖拽调整通道间距
@@ -313,6 +413,8 @@ window.onload = () => {
     setTimeout(() => {
       isDraggingChannel = false;
       draggedChannelIndex = -1;
+      // 重新绘制Canvas
+      drawCanvas();
     }, 200);
   });
 
