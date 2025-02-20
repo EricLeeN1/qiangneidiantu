@@ -4,11 +4,12 @@ window.onload = () => {
   const infoDiv = document.getElementById("info");
   const clickInfoDiv = document.getElementById("click-info");
   const selectBox = document.getElementById("selectBox");
-  const popupBox = document.getElementById("popup");
+  const popup = document.getElementById("popup");
 
   const speed = 2; // 波形的移动速度
   const padding = 50; // 画布边距
   const totalTime = 1000; // 总时间（ms）
+  const initHeight = 602; // canvas初始化高度（px）
   const timeScale = (canvas.width - 2 * padding) / totalTime; // 时间缩放比例
 
   let channelCount = 5; // 要绘制的腔内电图数量
@@ -105,10 +106,9 @@ window.onload = () => {
     ctx.lineWidth = 2;
 
     for (let i = 0; i < channelCount; i++) {
-      console.log(isDraggingChannel, draggedChannelIndex);
+      // console.log(isDraggingChannel, draggedChannelIndex);
 
       if (isDraggingChannel && draggedChannelIndex !== -1) { // 正在拖拽时
-        console.log('触发了吗');
         if (i === draggedChannelIndex) {
           ctx.strokeStyle = "#f0f000";
         } else {
@@ -146,7 +146,6 @@ window.onload = () => {
       const x2 = verticalLines[1];
       const index = iegmNames.findIndex((name) => name === lastClick.channel);
       const y = getChannelY(index) + getChannelHeight(index) / 2;
-      console.log(x1, x2);
 
       const midX = (x1 + x2) / 2;
 
@@ -230,8 +229,6 @@ window.onload = () => {
 
     const closeBtn = initCloseButton();
 
-    console.log(closeBtn);
-
     popup.innerHTML = content;
     popup.style.display = 'block';
     const width = popup.offsetWidth;
@@ -286,7 +283,7 @@ window.onload = () => {
 
   const showClickInfos = (x, y) => {
     const { channel, time } = getClickInfo(x, y);
-    console.log(`点击通道: ${channel}, 时间: ${time}`);
+    // console.log(`点击通道: ${channel}, 时间: ${time}`);
 
 
 
@@ -297,24 +294,24 @@ window.onload = () => {
       const minTime = Math.min(lastClick.time, time);
       const maxTime = Math.max(lastClick.time, time);
 
-      console.log(`时间范围是: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms`);
+      // console.log(`时间范围是: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms`);
 
 
       const channelIndex = iegmNames.indexOf(channel);
       const channelData = iegmData[channelIndex];
-      console.log(`通道 Index: ${channelIndex}`);
+      // console.log(`通道 Index: ${channelIndex}`);
 
 
       const startIndex = Math.floor(minTime);
       const endIndex = Math.floor(maxTime);
-      console.log(`通道开始与结束时间取整: ${startIndex} ${endIndex}`);
+      // console.log(`通道开始与结束时间取整: ${startIndex} ${endIndex}`);
 
       const dataSlice = channelData.slice(startIndex, endIndex + 1);
       const maxValue = Math.max(...dataSlice);
       const minValue = Math.min(...dataSlice);
 
-      console.log(`通道: ${channel}, 时间范围: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms`);
-      console.log(`最大值: ${maxValue}, 最小值: ${minValue}`);
+      // console.log(`通道: ${channel}, 时间范围: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms`);
+      // console.log(`最大值: ${maxValue}, 最小值: ${minValue}`);
 
       info += `当前通道: ${channel}, 时间范围: ${minTime.toFixed(2)}ms - ${maxTime.toFixed(2)}ms\n`;
       info += `最大值: ${maxValue}, 最小值: ${minValue}\n`;
@@ -403,7 +400,14 @@ window.onload = () => {
       //     2,
       //     Math.min(2, channelSpacings[draggedChannelIndex])
       //   );
-
+      console.log(channelSpacings);
+      
+      console.log(deltaY,channelSpacing);
+      console.log(canvas.height);
+      // 动态调整Canvas高度
+      const totalSpacing = channelSpacings.reduce((a, b) => a + b, 0);
+      canvasHeight = Math.max(initHeight, padding * 2 + (getChannelHeight()) * channelCount + totalSpacing * 20);
+      canvas.height = canvasHeight;
       drawCanvas();
     }
   });
@@ -413,6 +417,8 @@ window.onload = () => {
     setTimeout(() => {
       isDraggingChannel = false;
       draggedChannelIndex = -1;
+      canvas.height = initHeight;
+      channelSpacings = new Array(channelCount).fill(1); // 每个通道的间距比例
       // 重新绘制Canvas
       drawCanvas();
     }, 200);
@@ -420,6 +426,7 @@ window.onload = () => {
 
   const init = () => {
     channelSpacing = (canvas.height - 2 * padding) / channelCount; // 每个腔内电图之间的垂直间距
+    
     channelSpacings = new Array(channelCount).fill(1); // 每个通道的间距比例
     // 初始化数据存储和名称
     iegmNames = []; // 初始化通道名

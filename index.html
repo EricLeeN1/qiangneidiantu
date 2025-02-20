@@ -10,11 +10,12 @@
       user-select: none;
     }
 
-    canvas {
+    #iegmCanvas {
       border: 1px solid #000;
       display: block;
       margin: 20px auto;
       cursor: crosshair;
+      box-sizing: border-box;
     }
 
     #info,
@@ -65,12 +66,12 @@
       <option value="10">10</option>
     </select>
   </div>
-  <canvas id="iegmCanvas" width="1000" height="600"></canvas>
+  <canvas id="iegmCanvas" width="1000" height="602"></canvas>
   <div id="popup"></div>
   <div id="info">
     <div>点击canvas增加竖线竖线并查看数据。</div>
     <div>长按和拖拽一个频道的高度以调整频道间距。</div>
-  </div>
+  </div>  
   <div id="click-info"></div>
 
   <script src="./index.js"></script>
