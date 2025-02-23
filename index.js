@@ -5,6 +5,7 @@ window.onload = () => {
   const clickInfoDiv = document.getElementById("click-info");
   const selectBox = document.getElementById("selectBox");
   const popup = document.getElementById("popup");
+  const clearBtn = document.getElementById("clearBtn");
 
   const speed = 2; // 波形的移动速度
   const padding = 50; // 画布边距
@@ -401,8 +402,8 @@ window.onload = () => {
       //     Math.min(2, channelSpacings[draggedChannelIndex])
       //   );
       console.log(channelSpacings);
-      
-      console.log(deltaY,channelSpacing);
+
+      console.log(deltaY, channelSpacing);
       console.log(canvas.height);
       // 动态调整Canvas高度
       const totalSpacing = channelSpacings.reduce((a, b) => a + b, 0);
@@ -417,16 +418,23 @@ window.onload = () => {
     setTimeout(() => {
       isDraggingChannel = false;
       draggedChannelIndex = -1;
-      canvas.height = initHeight;
-      channelSpacings = new Array(channelCount).fill(1); // 每个通道的间距比例
+      // canvas.height = initHeight;
+      // channelSpacings = new Array(channelCount).fill(1); // 每个通道的间距比例
       // 重新绘制Canvas
       drawCanvas();
     }, 200);
   });
 
+  clearBtn.addEventListener("click", () => {
+    canvas.height = initHeight;
+    channelSpacings = new Array(channelCount).fill(1); // 每个通道的间距比例
+    // 重新绘制Canvas
+    drawCanvas();
+  });
+
   const init = () => {
     channelSpacing = (canvas.height - 2 * padding) / channelCount; // 每个腔内电图之间的垂直间距
-    
+
     channelSpacings = new Array(channelCount).fill(1); // 每个通道的间距比例
     // 初始化数据存储和名称
     iegmNames = []; // 初始化通道名
